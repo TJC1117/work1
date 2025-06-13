@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 
+function getTaipeiISOTime() {
+  const date = new Date();
+  // 台灣時區是 UTC+8
+  const taipeiTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return taipeiTime.toISOString().replace('Z', '');
+}
+
 export async function PUT(request) {
   try {
     const body = await request.json();
@@ -10,7 +17,7 @@ export async function PUT(request) {
       return NextResponse.json({ error: "缺少菜單 ID" }, { status: 400 });
     }
 
-    const updatedAt = new Date().toISOString();
+    const updatedAt = getTaipeiISOTime();
 
     const { data, error } = await supabase
       .from('MenuItem')

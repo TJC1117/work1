@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 
+function getTaipeiISOTime() {
+  const date = new Date();
+  // 台灣時區是 UTC+8
+  const taipeiTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return taipeiTime.toISOString().replace('Z', '');
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -36,7 +42,7 @@ export async function POST(request) {
     // 密碼加密
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const now = new Date().toISOString();
+    const now = new Date().getTaipeiISOTime();
 
     // 新增使用者，預設角色為 CUSTOMER
     const result = await pool.query(

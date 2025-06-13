@@ -1,30 +1,43 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies as getCookies } from 'next/headers';
-// import { Param } from '@/lib/generated/prisma/runtime/library';
+
+function getTaipeiISOTime() {
+  const date = new Date();
+  // 台灣時區是 UTC+8
+  const taipeiTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return taipeiTime.toISOString().replace('Z', '');
+}
+
 export async function PUT(request) {
-  // const { params } = await context;
   const url = new URL(request.url);
-  const pathname = url.pathname;
-  const parts = pathname.split('/');
+  const parts = url.pathname.split('/');
   const id = parts[parts.length - 1];
+
   const cookieStore = await getCookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
   try {
-    const { status, paymentStatus } = await request.json(); // 👈 根據更新內容支援多欄位
-    // const id = params.id;
+    const { status, paymentStatus } = await request.json();
 
     if (!id || (!status && paymentStatus === undefined)) {
       return NextResponse.json({ error: "缺少更新欄位" }, { status: 400 });
     }
 
     const updates = {
-      updatedAt: new Date().toISOString(),
+      updatedAt: getTaipeiISOTime(),
     };
 
-    if (status) updates.status = status;
-    if (paymentStatus !== undefined) updates.paymentStatus = paymentStatus;
+    if (status) {
+      updates.status = status;
+      if (status === "COMPLETED") {
+        updates.completedAt = getTaipeiISOTime(); // ✅ 設定完成時間
+      }
+    }
+
+    if (paymentStatus !== undefined) {
+      updates.paymentStatus = paymentStatus;
+    }
 
     const { data, error } = await supabase
       .from('Order')

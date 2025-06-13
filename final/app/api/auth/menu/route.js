@@ -1,5 +1,10 @@
 import { supabase } from "@/lib/supabaseClient"; 
-
+function getTaipeiISOTime() {
+  const date = new Date();
+  // 台灣時區是 UTC+8
+  const taipeiTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return taipeiTime.toISOString().replace('Z', '');
+}
 export async function GET(request) {
   const { data, error } = await supabase
     .from('MenuItem')
@@ -24,8 +29,8 @@ export async function POST(request) {
     const body = await request.json();
     const { name, description, price, imageUrl, isAvailable } = body;
 
-    const updatedAt = new Date().toISOString();
-    const createdAt = new Date().toISOString();
+    const updatedAt = getTaipeiISOTime();
+    const createdAt = getTaipeiISOTime();
 
     const { data, error } = await supabase
       .from('MenuItem')

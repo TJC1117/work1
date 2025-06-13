@@ -3,6 +3,15 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { cookies } from "next/headers";
+
+// 自訂函式，回傳台北時間的 ISO 格式字串（去掉末尾的 Z）
+function getTaipeiISOTime() {
+  const date = new Date();
+  // 台灣時區是 UTC+8，以下是簡單加八小時的作法
+  const taipeiTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+  return taipeiTime.toISOString().replace('Z', '');
+}
+
 export async function POST(request) {
   console.log("POST request received");
   
@@ -25,6 +34,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "訂單項目為空" }, { status: 400 });
     }
 
+    const createdAt = getTaipeiISOTime();
+    const updatedAt = getTaipeiISOTime();
+
+    // 新增訂單
     const { data: order, error: orderError } = await supabase
       .from("Order")
       .insert([
@@ -33,8 +46,8 @@ export async function POST(request) {
           totalAmount,
           status: "PENDING",
           paymentStatus,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt,
+          updatedAt,
         },
       ])
       .select()
@@ -42,6 +55,7 @@ export async function POST(request) {
 
     if (orderError) throw orderError;
 
+    // 新增訂單項目
     const orderItems = items.map((item) => ({
       orderId: order.id,
       menuItemId: item.menuItemId,
@@ -63,10 +77,11 @@ export async function POST(request) {
 export async function GET(request) {
   const cookieStore = await cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
- const {
-  data: { user },
-  error: authError
-} = await supabase.auth.getUser();
+  
+  const {
+    data: { user },
+    error: authError
+  } = await supabase.auth.getUser();
 
   try {
     const { data, error } = await supabase
@@ -83,7 +98,7 @@ export async function GET(request) {
           )
         )
       `)
-      // .eq("customerId", user.id)
+      // .eq("customerId", user.id)  // 若要過濾該使用者的訂單可開啟
       .order("createdAt", { ascending: false });
 
     if (error) throw error;
@@ -94,11 +109,7 @@ export async function GET(request) {
   }
 }
 
-
-
-// ... 保留现有的 POST 和 GET 方法 ...
-
-// 新增 PUT 方法
+// 更新訂單狀態
 export async function PUT(request) {
   const cookieStore = await cookies();
   const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -106,12 +117,14 @@ export async function PUT(request) {
   try {
     const { id, status } = await request.json();
     
-    // 更新订单状态
+    const updatedAt = getTaipeiISOTime();
+
+    // 更新订单状态及时间戳
     const { data, error } = await supabase
       .from('Order')
       .update({ 
         status,
-        updatedAt: new Date().toISOString() // 添加更新时间戳
+        updatedAt
       })
       .eq('id', id)
       .select();

@@ -63,6 +63,7 @@ const handleLogout = async () => {
                     { href: "/orders/pending", name: "等待中的訂單" },
                     { href: "/orders/ready", name: "完成的訂單" },
                     { href: "/kitchen", name: "廚房訂單" },
+                     { href: "/account", name: "帳目" },
                 ];
             default:
                 return [];
