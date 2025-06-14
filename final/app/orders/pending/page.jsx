@@ -150,17 +150,25 @@ export default function PendingOrdersPage() {
                                 <div className="mt-6 flex flex-col sm:flex-row justify-between gap-3">
                                     {!order.paymentStatus && (
                                         <button
-                                            onClick={() => handlePaymentConfirm(order.id)}
-                                            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+                                        onClick={() => handlePaymentConfirm(order.id)}
+                                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
                                         >
-                                            確認付款
+                                        確認付款
                                         </button>
                                     )}
+                                    
                                     <button
                                         onClick={() => handleStatusChange(order.id, "PREPARING")}
                                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                                     >
                                         標記為製作中
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleStatusChange(order.id, "CANCELLED")}
+                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+                                    >
+                                        取消訂單
                                     </button>
                                 </div>
                             </div>
